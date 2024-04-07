@@ -58,7 +58,7 @@ class Airport:
         if matching_airplanes:
             for flight in self.flights:
                 if (flight.destination == passenger_group.destination and 
-                    flight.airplane_id in [airplane.airplane_id for airplane in matching_airplanes] and
+                    flight.airplane in matching_airplanes and
                     flight.departure_time.date() == passenger_group.flight_date.date()):  
                     if flight.capacity + passenger_group.size <= flight.airplane.capacity:
                         flight.capacity += passenger_group.size
