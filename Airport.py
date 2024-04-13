@@ -72,4 +72,20 @@ class Airport:
         else:
             return None
 
+    def __str__(self):
+        airplanes_info = "\n".join(str(airplane) for airplane in self.airplanes)
+        flights_info = "\n".join(str(flight) for flight in self.flights)
+        passenger_groups_info = "\n".join(str(group) for group in self.passenger_groups)
 
+        separator = "-" * 30  # Separator dla czytelności
+
+        return (
+            f"Airport ID: {self.airport_id}\n"
+            f"{separator}\n"
+            f"Airplanes:\n{airplanes_info}\n"
+            f"{separator}\n"
+            f"Flights:\n{flights_info}\n"
+            f"{separator}\n"
+            f"Passenger Groups:\n{passenger_groups_info}\n"
+            f"{separator}"
+        )
