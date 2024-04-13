@@ -36,3 +36,6 @@ class Flight:
             return True
         else:
             return False
+
+    def __str__(self):
+        return f"Flight ID: {self.flight_id}\nAirplane ID: {self.airplane.airplane_id}\nDestination: {self.destination}\nDeparture Time: {self.departure_time}\nReturn Time: {self.return_time}\nCapacity: {self.capacity}\nCost: {self.cost}\n"
