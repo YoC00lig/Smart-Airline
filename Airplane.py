@@ -13,3 +13,6 @@ class Airplane:
         self.airplane_id = airplane_id
         self.capacity = capacity
         self.ticket_type = ticket_type
+
+    def __str__(self):
+        return f"Airplane ID: {self.airplane_id}\nCapacity: {self.capacity}\nTicket Type: {self.ticket_type.value}\n"

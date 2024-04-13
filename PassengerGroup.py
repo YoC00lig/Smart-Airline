@@ -17,3 +17,6 @@ class PassengerGroup:
         self.ticket_type = ticket_type
         self.destination = destination
         self.flight_date = flight_date
+
+    def __str__(self):
+        return f"Group ID: {self.group_id}\nSize: {self.size}\nTicket Type: {self.ticket_type.value}\nDestination: {self.destination}\nFlight Date: {self.flight_date}\n"
