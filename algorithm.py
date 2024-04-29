@@ -3,7 +3,7 @@ import random
 from TicketCost import TicketCost
 from Ticket import TicketType
 
-# Example output:
+# Example input:
 # Airplanes:
 # {'id': 'A1', 'seats': {<TicketType.FIRST_CLASS: 'First Class'>: 30, <TicketType.BUSINESS: 'Business Class'>: 60, <TicketType.ECONOMY: 'Economy Class'>: 180}}
 # {'id': 'A2', 'seats': {<TicketType.FIRST_CLASS: 'First Class'>: 10, <TicketType.BUSINESS: 'Business Class'>: 90, <TicketType.ECONOMY: 'Economy Class'>: 130}}
@@ -106,8 +106,8 @@ class Bees:
         Perform a cycle of the Bees Algorithm.
         """
         n_iterations = 100
-        n_elite_bees = 10
-        n_sites = 5
+        n_elite_bees = 10 # TODO change interpretation
+        n_sites = 5 # TODO change interpretation
         n_recruited_bees = 3  # example value
         n_remaining_bees = 5  # example value
 
@@ -122,7 +122,7 @@ class Bees:
             # Select sites for neighborhood search
             sites = elite_bees[:n_sites]
 
-            # Recruit bees around sites and evaluate their fitness
+            # Recruit bees around sites and evaluate their fitness TODO also for the rest of the sites/elite bees
             # fittest_bees = {}
             for site in sites:
                 fittest_bee = None
@@ -147,7 +147,7 @@ class Bees:
                 # fittest_bees[site['id']] = fittest_bee
 
                 # Add the fittest bee to the population
-                population.append(fittest_bee)
+                population.append(fittest_bee) # TODO instead of adding change the population (replace)
 
             # Now, the population only contains the fittest bee from each site
 
@@ -159,7 +159,7 @@ class Bees:
             # new_population = Bees.initialise_population(data_dict, len(population) - n_elite_bees)
             # Add the new population to the remaining bees
             for bee in new_population:
-                population.append(bee)
+                population.append(bee) # TODO instead of adding change the remaining bees (replace)
 
             # Evaluate the population
             fitness_values = Bees.evaluate_population(population)
