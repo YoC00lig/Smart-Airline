@@ -2,6 +2,7 @@ import pytest
 from main import create_airport
 from messages import Messages
 
+# TODO Change tests from Airplane (i changed capacity to seats based on ticket type)
 
 @pytest.fixture
 def airport():

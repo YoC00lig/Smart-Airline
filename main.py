@@ -5,18 +5,19 @@ from PassengerGroup import PassengerGroup, TicketType
 from datetime import datetime
 from messages import Messages
 
+# TODO Change functiom from Airplane (i changed capacity to seats based on ticket type)
 
 data_dict = {
     "airplanes": [
-        {"id": "A1", "capacity": 200, "ticket_type": TicketType.DOMESTIC},
-        {"id": "A2", "capacity": 300, "ticket_type": TicketType.INTERNATIONAL},
-        {"id": "A3", "capacity": 250, "ticket_type": TicketType.DOMESTIC}
+        {"id": "A1", "capacity": 200, "ticket_type": TicketType.BUSINESS},
+        {"id": "A2", "capacity": 300, "ticket_type": TicketType.ECONOMY},
+        {"id": "A3", "capacity": 250, "ticket_type": TicketType.BUSINESS}
     ],
     "passenger_groups": [
-        {"id": "G1", "size": 150, "ticket_type": TicketType.DOMESTIC, "destination": "Airport2", "flight_date": datetime(2024, 4, 20)},
-        {"id": "G2", "size": 250, "ticket_type": TicketType.INTERNATIONAL, "destination": "Airport3", "flight_date": datetime(2024, 4, 22)},
-        {"id": "G3", "size": 100, "ticket_type": TicketType.DOMESTIC, "destination": "Airport2", "flight_date": datetime(2024, 4, 21)},
-        {"id": "G4", "size": 180, "ticket_type": TicketType.INTERNATIONAL, "destination": "Airport4", "flight_date": datetime(2024, 4, 23)}
+        {"id": "G1", "size": 150, "ticket_type": TicketType.BUSINESS, "destination": "Airport2", "flight_date": datetime(2024, 4, 20)},
+        {"id": "G2", "size": 250, "ticket_type": TicketType.ECONOMY, "destination": "Airport3", "flight_date": datetime(2024, 4, 22)},
+        {"id": "G3", "size": 100, "ticket_type": TicketType.BUSINESS, "destination": "Airport2", "flight_date": datetime(2024, 4, 21)},
+        {"id": "G4", "size": 180, "ticket_type": TicketType.ECONOMY, "destination": "Airport4", "flight_date": datetime(2024, 4, 23)}
     ],
     "flights": [
         {"id": "F1", "airplane_id": "A1", "destination": "Airport2", "departure_date": datetime(2024, 4, 20), "return_date": datetime(2024, 4, 21), "cost": 1000.0},
