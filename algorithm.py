@@ -19,6 +19,9 @@ class Bees:
 
     @staticmethod
     def initialise_population(data_dict: dict, population_size: int):
+        """
+        Initialise the population with random solutions.
+        """
         airplanes = data_dict["airplanes"]
         passenger_groups = data_dict["passenger_groups"]
         population = []
@@ -42,6 +45,9 @@ class Bees:
     
     @staticmethod
     def evaluate_population(population):
+        """
+        Evaluate the fitness of the population.
+        """
         fitness_values = []
         PASSENGER_COST = 20 #TODO calculate passenger cost
         for solution in population:
@@ -54,6 +60,9 @@ class Bees:
         return fitness_values
     @staticmethod
     def generate_new_solution(site, data_dict):
+        """
+        Generate a new solution in the neighborhood of the site.
+        """
         # Create a copy of the site to avoid modifying the original solution
         new_solution = site.copy()
 
@@ -93,6 +102,9 @@ class Bees:
     
     @staticmethod
     def bees_cycle(population, data_dict, fitness_values):
+        """
+        Perform a cycle of the Bees Algorithm.
+        """
         n_iterations = 100
         n_elite_bees = 10
         n_sites = 5
@@ -144,7 +156,7 @@ class Bees:
             
             # Generate completely new solutions for the remaining bees
             new_population = Bees.initialise_population(data_dict, n_remaining_bees)  # You need to implement this function
-
+            # new_population = Bees.initialise_population(data_dict, len(population) - n_elite_bees)
             # Add the new population to the remaining bees
             for bee in new_population:
                 population.append(bee)
