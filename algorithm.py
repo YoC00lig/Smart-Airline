@@ -16,11 +16,19 @@ class Bees:
     """
     Swarm Intelligence Algorithm - Bees Algorithm
     """
+    def __init__(self, population_size: int):
+        self.n_iterations = 100
+        self.n_scouts = population_size
+        self.n_best_sites = 10
+        self.n_elites = 5
+        self.n_recruited_elites = 5
+        self.n_rectruited_best = 3
+        
 
     @staticmethod
-    def initialise_population(data_dict: dict, population_size: int):
+    def generate_population(data_dict: dict, population_size: int):
         """
-        Initialise the population with random solutions.
+        Get random solutions based on number of bees.
         """
         airplanes = data_dict["airplanes"]
         passenger_groups = data_dict["passenger_groups"]
@@ -38,7 +46,7 @@ class Bees:
                     solution[airplane["id"]]["groups"].append(group)
                     airplane_seats[airplane["id"]][group["ticket_type"]] -= group["size"]
                     if solution[airplane["id"]]["destination"] is None:
-                        solution[airplane["id"]]["destination"] = group["destination"]
+                        solution[airplane["id"]]["destination"] = group["destination"] # First destination assigned (could be random in the beginning)
             population.append(solution)
 
         return population
@@ -58,6 +66,7 @@ class Bees:
                     total_revenue += sum([TicketCost.get_ticket_cost(group["ticket_type"]) * group["size"] for group in data["groups"]])
             fitness_values.append(total_revenue - total_costs)
         return fitness_values
+    
     @staticmethod
     def generate_new_solution(site, data_dict):
         """
@@ -99,7 +108,7 @@ class Bees:
         return new_solution
 
     
-    
+    # old solution
     @staticmethod
     def bees_cycle(population, data_dict, fitness_values):
         """
@@ -155,7 +164,7 @@ class Bees:
             remaining_bees = sorted_indices[n_elite_bees:]
             
             # Generate completely new solutions for the remaining bees
-            new_population = Bees.initialise_population(data_dict, n_remaining_bees)  # You need to implement this function
+            new_population = Bees.generate_population(data_dict, n_remaining_bees)  # You need to implement this function
             # new_population = Bees.initialise_population(data_dict, len(population) - n_elite_bees)
             # Add the new population to the remaining bees
             for bee in new_population:
@@ -165,8 +174,60 @@ class Bees:
             fitness_values = Bees.evaluate_population(population)
 
         return population, fitness_values
+    
+    def perform_local_search(indices, n_recruited, initial_population, data_dict):
+        """
+        Perform local search around the fittest bees.
+        This could be better optimized based on flower patch (Neighborhood shrinking and Site abandonment) - http://beesalgorithmsite.altervista.org/BeesAlgorithm.htm
+        """
+        for index in indices:
+            fittest_bee = None
+            fittest_bee_fitness = Bees.evaluate_population([initial_population[index]])[0]
+            for _ in range(n_recruited):
+                new_solution = Bees.generate_new_solution(initial_population[index], data_dict)
+                new_solution_fitness = Bees.evaluate_population([new_solution])[0]
+                if new_solution_fitness > fittest_bee_fitness:
+                    fittest_bee = new_solution
+                    fittest_bee_fitness = new_solution_fitness
 
+            if fittest_bee:
+                initial_population[index] = fittest_bee
 
+    def bees_algorithm(self,data_dict):
+        """
+        Perform the Bees Algorithm.
+        """
+
+        initial_population = Bees.generate_population(data_dict, self.n_scouts)
+        
+        # waggle dance
+        fitness_values = Bees.evaluate_population(initial_population)
+
+        print("Initial Fitness Values:")
+        for fitness in sorted(fitness_values, reverse=True)[:10]:
+            print(fitness)
+
+        for _ in range(self.n_iterations):
+
+            sorted_indices = sorted(range(len(fitness_values)), key=lambda i: fitness_values[i], reverse=True)
+            elite_indices = sorted_indices[:self.n_elites]
+            remaining_best_indices = sorted_indices[self.n_elites:self.n_best_sites]
+
+            # for site in sit
+            Bees.perform_local_search(elite_indices, self.n_recruited_elites, initial_population, data_dict)
+            Bees.perform_local_search(remaining_best_indices, self.n_rectruited_best, initial_population, data_dict)
+
+            # global search
+            remaining_indices = sorted_indices[self.n_best_sites:]
+            new_population = Bees.generate_population(data_dict, self.n_scouts - self.n_best_sites)
+            for i, index in enumerate(remaining_indices):
+                initial_population[index] = new_population[i]
+            
+            fitness_values = Bees.evaluate_population(initial_population)
+
+        print("Fitness Values:")
+        for fitness in sorted(fitness_values, reverse=True)[:10]:
+            print(fitness)
 
         
     
@@ -174,29 +235,9 @@ if __name__ == "__main__":
     data_dict = Generator.generate_random_test_data(3, 100, 3)
     Generator.print_data_dict(data_dict)
 
-    population = Bees.initialise_population(data_dict, 5)
-    print("Population:")
-    for solution in population:
-        for airplane, groups in solution.items():
-            print(f"Airplane: {airplane}, Destination: {groups['destination']}")
-            print("Groups:")
-            for group in groups["groups"]:
-                print(group)
-        print("\n")
+    bees = Bees(20)
 
-    fitness_values = Bees.evaluate_population(population)
-    print("Fitness Values:")
-    for fitness in fitness_values:
-        print(fitness)
-
-    new_population, new_fitness_values = Bees.bees_cycle(population, data_dict, fitness_values)
-
-    print("New Population:")
-    # ...
-
-    print("New Fitness Values:")
-    for fitness in sorted(new_fitness_values, reverse=True)[:10]:
-        print(fitness)
+    bees.bees_algorithm(data_dict)
 
 
 
