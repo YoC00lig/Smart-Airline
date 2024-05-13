@@ -41,7 +41,7 @@ class Generator:
 
     @staticmethod
     def generate_airplanes(n : int):
-        airplanes = []
+        airplanes = {}
         for i in range(1,n+1):
             airplane_id = f"A{i}"
             seats = {}
@@ -54,12 +54,12 @@ class Generator:
                     capacity = random.randrange(100, 200, 10)
                 seats[ticket_type] = capacity
 
-            airplanes.append({"id": airplane_id, "seats": seats})
+            airplanes[airplane_id] = seats
         return airplanes
 
     @staticmethod
     def generate_passenger_groups(n : int, n_airports : int):
-        passenger_groups = []
+        passenger_groups = {}
         airports = [f"Airport{i}" for i in range(2,n_airports+2)]
         for i in range(1,n+1):
             group_id = f"G{i}"
@@ -67,7 +67,8 @@ class Generator:
             ticket_type = random.choice(list(TicketType))
             destination = random.choice(airports)
             flight_date = (datetime.now() + timedelta(days=random.randint(1, 5))).date()
-            passenger_groups.append({"id": group_id, "size": size, "ticket_type": ticket_type, "destination": destination, "flight_date": flight_date})
+            # passenger_groups.append({"id": group_id, "size": size, "ticket_type": ticket_type, "destination": destination, "flight_date": flight_date})
+            passenger_groups[group_id] = {"size": size, "ticket_type": ticket_type, "destination": destination, "flight_date": flight_date}
         return passenger_groups
 
     @staticmethod
@@ -92,11 +93,11 @@ class Generator:
     @staticmethod 
     def print_data_dict(data_dict: dict):
         print("Airplanes:")
-        for airplane in data_dict["airplanes"]:
-            print(airplane)
+        for id, airplane in data_dict["airplanes"].items():
+            print(f"{id}: {airplane}")
         print("\nPassenger Groups:")
-        for passenger_group in data_dict["passenger_groups"]:
-            print(passenger_group)
+        for id, passenger_group in data_dict["passenger_groups"].items():
+            print(f"{id}: {passenger_group}")
         print("\nFlights:")
         for flight in data_dict["flights"]:
             print(flight)
