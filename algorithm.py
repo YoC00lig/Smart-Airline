@@ -102,11 +102,11 @@ class Bees:
         for _ in range(population_size):
             solution = {airplane_id: {"groups": [], "destination": None, "free_seats": airplane.copy()} for airplane_id, airplane in airplanes.items()}
             for group_id, group in passenger_groups.items():
-                suitable_airplanes = [(a_id,a) for a_id,a in airplanes.items() if solution[a_id]["free_seats"][group["ticket_type"]] >= group["size"] and
+                suitable_airplanes = [a_id for a_id in airplanes.keys() if solution[a_id]["free_seats"][group["ticket_type"]] >= group["size"] and
                                         (solution[a_id]["destination"] is None or 
                                          solution[a_id]["destination"] == group["destination"])]
                 if suitable_airplanes:
-                    airplane_id,airplane = random.choice(suitable_airplanes)
+                    airplane_id = random.choice(suitable_airplanes)
                     solution[airplane_id]["groups"].append(group_id)
                     solution[airplane_id]["free_seats"][group["ticket_type"]] -= group["size"]
                     if solution[airplane_id]["destination"] is None:
