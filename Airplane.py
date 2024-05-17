@@ -11,7 +11,7 @@ class Airplane:
 
     def __init__(self, airplane_id : str, capacity : int, ticket_type : TicketType):
         self.airplane_id = airplane_id
-        self.capacity = capacity
+        self.capacity = capacity # Here probably there should be capacity based on the type of ticket TODO
         self.ticket_type = ticket_type
 
     def __str__(self):

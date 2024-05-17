@@ -2,6 +2,9 @@ from Flight import Flight
 from Airplane import Airplane
 from PassengerGroup import PassengerGroup
 
+# TODO Change tests from Airplane (i changed capacity to seats based on ticket type)
+
+
 class Airport:
     """A class representing our main airport.
 
