@@ -23,12 +23,10 @@ from PassengerGroup import TicketType
 # }
 
 
-
 class Generator:
     """A class for generating pseudo random data for testing purposes.
 
     Attributes:
-        None
 
     Methods:
         generate_airplanes(n : int) -> list: Generate a list of n airplanes with random capacities.
@@ -40,69 +38,78 @@ class Generator:
     """
 
     @staticmethod
-    def generate_airplanes(n : int):
+    def generate_airplanes(n: int):
         airplanes = {}
-        for i in range(1,n+1):
+        for i in range(1, n + 1):
             airplane_id = f"A{i}"
             seats = {}
             for ticket_type in TicketType:
-                if ticket_type == TicketType.FIRST_CLASS:
-                    capacity = random.randrange(20, 50, 10)
-                elif ticket_type == TicketType.BUSINESS:
-                    capacity = random.randrange(50, 100, 10)
-                elif ticket_type == TicketType.ECONOMY:
-                    capacity = random.randrange(100, 200, 10)
+                match ticket_type:
+                    case TicketType.FIRST_CLASS:
+                        capacity = random.randrange(20, 50, 10)
+                    case TicketType.BUSINESS:
+                        capacity = random.randrange(50, 100, 10)
+                    case TicketType.ECONOMY:
+                        capacity = random.randrange(100, 200, 10)
+                    case _:
+                        capacity = 100
                 seats[ticket_type] = capacity
 
             airplanes[airplane_id] = seats
         return airplanes
 
     @staticmethod
-    def generate_passenger_groups(n : int, n_airports : int):
+    def generate_passenger_groups(n: int, n_airports: int):
         passenger_groups = {}
-        airports = [f"Airport{i}" for i in range(2,n_airports+2)]
-        for i in range(1,n+1):
+        airports = [f"Airport{i}" for i in range(2, n_airports + 2)]
+        for i in range(1, n + 1):
             group_id = f"G{i}"
             size = random.randint(10, 40)
             ticket_type = random.choice(list(TicketType))
             destination = random.choice(airports)
             flight_date = (datetime.now() + timedelta(days=random.randint(1, 5))).date()
-            # passenger_groups.append({"id": group_id, "size": size, "ticket_type": ticket_type, "destination": destination, "flight_date": flight_date})
-            passenger_groups[group_id] = {"size": size, "ticket_type": ticket_type, "destination": destination, "flight_date": flight_date}
+            passenger_groups[group_id] = \
+                {"size": size, "ticket_type": ticket_type, "destination": destination, "flight_date": flight_date}
         return passenger_groups
 
     @staticmethod
-    def generate_random_test_data(n_airplanes : int, n_passenger_groups : int, n_airports : int):
-        data_dict = {
-            "airplanes": Generator.generate_airplanes(n_airplanes),
-            "passenger_groups": Generator.generate_passenger_groups(n_passenger_groups, n_airports),
-            "flights": [] # Fligtht data will be calculated with algorithm in main.py
+    def generate_random_test_data(number_of_airplanes: int, number_of_passenger_groups: int, number_of_airports: int):
+        return {
+            "airplanes": Generator.generate_airplanes(number_of_airplanes),
+            "passenger_groups": Generator.generate_passenger_groups(number_of_passenger_groups, number_of_airports),
+            "flights": []# Flights will be calculated with algorithm in main.py
         }
-        return data_dict
     
     @staticmethod
-    def generate_many_random_test_data(n : int):
+    def generate_many_random_test_data(n: int):
         data_dicts = []
         for _ in range(n):
-            n_airplanes = random.randint(2, 10)
-            n_passenger_groups = random.randint(5, 10)
-            n_airports = random.randint(2, 10)
-            data_dicts.append(Generator.generate_random_test_data(n_airplanes, n_passenger_groups, n_airports)) 
+            number_of_airplanes = random.randint(2, 10)
+            number_of_passenger_groups = random.randint(5, 10)
+            number_of_airports = random.randint(2, 10)
+            data_dicts.append(
+                Generator.generate_random_test_data(
+                    number_of_airplanes,
+                    number_of_passenger_groups,
+                    number_of_airports
+                )
+            )
         return data_dicts
     
     @staticmethod 
-    def print_data_dict(data_dict: dict):
+    def print_test_data(test_data: dict):
         print("Airplanes:")
-        for id, airplane in data_dict["airplanes"].items():
-            print(f"{id}: {airplane}")
+        for idx, airplane in test_data["airplanes"].items():
+            print(f"{idx}: {airplane}")
         print("\nPassenger Groups:")
-        for id, passenger_group in data_dict["passenger_groups"].items():
-            print(f"{id}: {passenger_group}")
+        for idx, passenger_group in test_data["passenger_groups"].items():
+            print(f"{idx}: {passenger_group}")
         print("\nFlights:")
-        for flight in data_dict["flights"]:
+        for flight in test_data["flights"]:
             print(flight)
+
 
 if __name__ == "__main__":
     # Example usage
-    data_dict = Generator.generate_random_test_data(3, 4, 3)
-    Generator.print_data_dict(data_dict)
+    random_test_data = Generator.generate_random_test_data(3, 4, 3)
+    Generator.print_test_data(random_test_data)

@@ -1,7 +1,6 @@
 from generator import Generator
 import random 
 from TicketCost import TicketCost
-from Ticket import TicketType
 from copy import deepcopy
 # Example input:
 # Airplanes:
@@ -12,34 +11,35 @@ from copy import deepcopy
 # {'G1': {size': 19, 'ticket_type': <TicketType.BUSINESS: 'Business Class'>, 'destination': 'Airport3', 'flight_date': datetime.date(2024, 4, 30)}}
 # {'G2': {'size': 12, 'ticket_type': <TicketType.BUSINESS: 'Business Class'>, 'destination': 'Airport3', 'flight_date': datetime.date(2024, 5, 3)}}
 
+
 class Bees:
     """
     Swarm Intelligence Algorithm - Bees Algorithm
     """
     def __init__(self, scouts: int):
-        self.n_iterations = 100
-        self.n_scouts = scouts
-        self.n_best_sites = 10
-        self.n_elites = 5
-        self.n_recruited_elites = 5
-        self.n_rectruited_best = 3
-        
+        self.number_of_iterations = 100
+        self.number_of_scouts = scouts
+        self.number_of_best_sites = 10
+        self.number_of_elites = 5
+        self.number_of_recruited_elites = 5
+        self.number_of_recruited_best = 3
+
     # old solution
-    def bees_algorithm_old(self,population, data_dict, fitness_values) -> tuple:
+    @staticmethod
+    def bees_algorithm_old(population, data_dict, fitness_values) -> tuple:
         """
         Perform a cycle of the Bees Algorithm.
         """
         n_iterations = 100
-        n_elite_bees = 10 # TODO change interpretation
-        n_sites = 5 # TODO change interpretation
-        n_recruited_bees = 3  # example value
-        n_remaining_bees = 5  # example value
+        n_elite_bees = 10
+        n_sites = 5
+        n_recruited_bees = 3
+        n_remaining_bees = 5
 
         for _ in range(n_iterations):
 
             # Select the elite bees
             sorted_indices = sorted(range(len(fitness_values)), key=lambda i: fitness_values[i], reverse=True)
-            # elite_indices = sorted(range(len(fitness_values)), key=lambda i: fitness_values[i], reverse=True)[:n_elite_bees]
             elite_indices = sorted_indices[:n_elite_bees]
             elite_bees = [population[i] for i in elite_indices]
 
@@ -77,7 +77,7 @@ class Bees:
 
             # Select the remaining bees
             remaining_bees = sorted_indices[n_elite_bees:]
-            
+
             # Generate completely new solutions for the remaining bees
             new_population = Bees.generate_population(data_dict, n_remaining_bees)  # You need to implement this function
             # new_population = Bees.initialise_population(data_dict, len(population) - n_elite_bees)
@@ -100,11 +100,17 @@ class Bees:
         population = []
 
         for _ in range(population_size):
-            solution = {airplane_id: {"groups": [], "destination": None, "free_seats": airplane.copy()} for airplane_id, airplane in airplanes.items()}
+            solution = {
+                airplane_id: {"groups": [], "destination": None, "free_seats": airplane.copy()}
+                for airplane_id, airplane in airplanes.items()
+            }
             for group_id, group in passenger_groups.items():
-                suitable_airplanes = [a_id for a_id in airplanes.keys() if solution[a_id]["free_seats"][group["ticket_type"]] >= group["size"] and
-                                        (solution[a_id]["destination"] is None or 
-                                         solution[a_id]["destination"] == group["destination"])]
+                suitable_airplanes = [
+                    a_id for a_id in airplanes.keys()
+                    if solution[a_id]["free_seats"][group["ticket_type"]] >= group["size"] and
+                    (solution[a_id]["destination"] is None or
+                     solution[a_id]["destination"] == group["destination"])
+                ]
                 if suitable_airplanes:
                     airplane_id = random.choice(suitable_airplanes)
                     solution[airplane_id]["groups"].append(group_id)
@@ -122,9 +128,13 @@ class Bees:
         """
         total_revenue = 0
         total_costs = 0
-        for airplane,data in solution.items():
-            if data["groups"]:
-                total_revenue += sum([TicketCost.get_ticket_cost(data_dict["passenger_groups"][group_id]["ticket_type"]) * data_dict["passenger_groups"][group_id]["size"] for group_id in data["groups"]])
+        for airplane, data in solution.items():
+            for group_id in data["groups"]:
+                ticket_type = data_dict["passenger_groups"][group_id]["ticket_type"]
+                ticket_cost = TicketCost.get_ticket_cost(ticket_type)
+                size = data_dict["passenger_groups"][group_id]["size"]
+                total_revenue += ticket_cost * size
+
         return total_revenue - total_costs
     
     @staticmethod
@@ -212,19 +222,19 @@ class Bees:
         population = deepcopy(initial_population)
         fitness_values = deepcopy(initial_fitness_values)
 
-        for _ in range(self.n_iterations):
+        for _ in range(self.number_of_iterations):
 
             sorted_indices = sorted(range(len(fitness_values)), key=lambda i: fitness_values[i], reverse=True)
-            elite_indices = sorted_indices[:self.n_elites]
-            remaining_best_indices = sorted_indices[self.n_elites:self.n_best_sites]
+            elite_indices = sorted_indices[:self.number_of_elites]
+            remaining_best_indices = sorted_indices[self.number_of_elites:self.number_of_best_sites]
 
             # local search
-            Bees.perform_local_search(elite_indices, self.n_recruited_elites, population, data_dict)
-            Bees.perform_local_search(remaining_best_indices, self.n_rectruited_best, population, data_dict)
+            Bees.perform_local_search(elite_indices, self.number_of_recruited_elites, population, data_dict)
+            Bees.perform_local_search(remaining_best_indices, self.number_of_recruited_best, population, data_dict)
 
             # global search
-            remaining_indices = sorted_indices[self.n_best_sites:]
-            new_population = Bees.generate_population(data_dict, self.n_scouts - self.n_best_sites)
+            remaining_indices = sorted_indices[self.number_of_best_sites:]
+            new_population = Bees.generate_population(data_dict, self.number_of_scouts - self.number_of_best_sites)
             for i, index in enumerate(remaining_indices):
                 population[index] = new_population[i]
             
@@ -237,7 +247,7 @@ class Bees:
         Perform the Bees Algorithm.
         """
         # Generate initial population
-        initial_population = Bees.generate_population(data_dict, self.n_scouts)
+        initial_population = Bees.generate_population(data_dict, self.number_of_scouts)
         
         # Evaluate the initial population (waggle dance)
         fitness_values = Bees.evaluate_population(initial_population, data_dict)
@@ -275,8 +285,3 @@ if __name__ == "__main__":
         for _ in range(5):
             solution, population = bees.bees_algorithm(data_dict)
             # print(Bees.evaluate_solution(solution))
-
-
-
-    
-    
