@@ -31,6 +31,7 @@ class Bees:
         """
         Perform the Bees Algorithm.
         """
+        # Save values from data dict in class object
         self.airplanes = data_dict['airplanes']
         self.passenger_groups = data_dict['passenger_groups']
 
@@ -54,10 +55,7 @@ class Bees:
             fitness_new, new_solution = fitness, solution
 
         # Check if fitness improved
-        if fitness_old > fitness_new:
-            assert False, f"Fitness did not improve: {fitness_old} > {fitness_new}"
-        else:
-            print(f"Fitness improved: {fitness_old} < {fitness_new}, improved by {fitness_new - fitness_old}")
+        self.has_fitness_improved(fitness_old, fitness_new)
 
         return new_solution, last_population
 
@@ -65,36 +63,50 @@ class Bees:
         """
         Get random solutions based on number of bees.
         """
-        # airplanes = data_dict["airplanes"]
-        # passenger_groups = data_dict["passenger_groups"]
-        population = []
+        return [self.generate_random_solution() for _ in range(population_size)]
 
-        for _ in range(population_size):
-            solution = {
-                airplane_id: {"groups": [], "destination": None, "free_seats": airplane.copy()}
-                for airplane_id, airplane in self.airplanes.items()
-            }
-            for group_id, group in self.passenger_groups.items():
-                suitable_airplanes = [
-                    a_id for a_id in self.airplanes.keys()
-                    if solution[a_id]["free_seats"][group["ticket_type"]] >= group["size"] and
-                    (solution[a_id]["destination"] is None or
-                     solution[a_id]["destination"] == group["destination"])
+    def generate_random_solution(self) -> dict:
+        solution = {
+            airplane_id: {"groups": [], "destination": None, "free_seats": airplane.copy()}
+            for airplane_id, airplane in self.airplanes.items()
+        }
+        for group_id, group in self.passenger_groups.items():
+            suitable_airplanes = self.get_suitable_airplanes(group, solution)
+            if suitable_airplanes:
+                airplane_id = random.choice(suitable_airplanes)
+                solution[airplane_id]["groups"].append(group_id)
+                solution[airplane_id]["free_seats"][group["ticket_type"]] -= group["size"]
+                if solution[airplane_id]["destination"] is None:
+                    # First destination assigned (could be random in the beginning)
+                    solution[airplane_id]["destination"] = group["destination"]
+        return solution
+
+    def get_suitable_airplanes(self, group: dict, solution: dict) -> list:
+        return [
+                    airplane_id for airplane_id in self.airplanes.keys()
+                    if self.has_enough_space(solution[airplane_id], group) and
+                    self.has_correct_destination(solution[airplane_id], group)
                 ]
-                if suitable_airplanes:
-                    airplane_id = random.choice(suitable_airplanes)
-                    solution[airplane_id]["groups"].append(group_id)
-                    solution[airplane_id]["free_seats"][group["ticket_type"]] -= group["size"]
-                    if solution[airplane_id]["destination"] is None:
-                        solution[airplane_id]["destination"] = group["destination"] # First destination assigned (could be random in the beginning)
-            population.append(solution)
 
-        return population
+    @staticmethod
+    def has_enough_space(airplane, group):
+        return airplane["free_seats"][group["ticket_type"]] >= group["size"]
+
+    @staticmethod
+    def has_correct_destination(airplane, group):
+        return airplane["destination"] is None or airplane["destination"] == group["destination"]
+
+    def evaluate_population(self, population: list) -> list:
+        """
+        Evaluate the fitness of the population.
+        """
+        return [self.evaluate_solution(solution) for solution in population]
 
     def evaluate_solution(self, solution: dict) -> int:
         """
         Evaluate the fitness of a solution.
         """
+        PASSENGER_COST = 20  # TODO calculate passenger cost
         total_revenue = 0
         total_costs = 0
         for airplane, data in solution.items():
@@ -105,16 +117,6 @@ class Bees:
                 total_revenue += ticket_cost * size
 
         return total_revenue - total_costs
-
-    def evaluate_population(self, population: list) -> list:
-        """
-        Evaluate the fitness of the population.
-        """
-        fitness_values = []
-        PASSENGER_COST = 20 #TODO calculate passenger cost, probably move to evaluate_solution
-        for solution in population:
-            fitness_values.append(self.evaluate_solution(solution))
-        return fitness_values
 
     def generate_new_solution(self, site: dict) -> dict:
         """
@@ -210,6 +212,13 @@ class Bees:
 
         return population, fitness_values
 
+    @staticmethod
+    def has_fitness_improved(fitness_old: int, fitness_new: int) -> None:
+        if fitness_old > fitness_new:
+            print(f"Fitness did not improve: {fitness_old} > {fitness_new}")
+        else:
+            print(f"Fitness improved: {fitness_old} < {fitness_new}, improved by {fitness_new - fitness_old}")
+
         
 if __name__ == "__main__":
     for i in range(1):
@@ -224,5 +233,5 @@ if __name__ == "__main__":
         bees = Bees(20)
 
         for _ in range(5):
-            solution, population = bees.bees_algorithm(data)
+            final_solution, final_population = bees.bees_algorithm(data)
             # print(Bees.evaluate_solution(solution))
