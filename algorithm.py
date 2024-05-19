@@ -2,6 +2,7 @@ from generator import Generator
 import random 
 from TicketCost import TicketCost
 from copy import deepcopy
+
 # Example input:
 # Airplanes:
 # {'A1': {'seats': {<TicketType.FIRST_CLASS: 'First Class'>: 30, <TicketType.BUSINESS: 'Business Class'>: 60, <TicketType.ECONOMY: 'Economy Class'>: 180}}}
@@ -17,22 +18,27 @@ class Bees:
     Swarm Intelligence Algorithm - Bees Algorithm
     """
     def __init__(self, scouts: int):
-        self.number_of_iterations = 100
         self.number_of_scouts = scouts
+        self.number_of_iterations = 100
         self.number_of_best_sites = 10
         self.number_of_elites = 5
         self.number_of_recruited_elites = 5
         self.number_of_recruited_best = 3
+        self.airplanes = None
+        self.passenger_groups = None
 
     def bees_algorithm(self, data_dict: dict) -> tuple:
         """
         Perform the Bees Algorithm.
         """
+        self.airplanes = data_dict['airplanes']
+        self.passenger_groups = data_dict['passenger_groups']
+
         # Generate initial population
-        initial_population = self.generate_population(data_dict, self.number_of_scouts)
+        initial_population = self.generate_population(self.number_of_scouts)
 
         # Evaluate the initial population (waggle dance)
-        fitness_values = self.evaluate_population(initial_population, data_dict)
+        fitness_values = self.evaluate_population(initial_population)
 
         # Select old best solution
         fitness_old, old_solution = None, None
@@ -40,7 +46,7 @@ class Bees:
             fitness_old, old_solution = fitness, solution
 
         # Perform a cycle of the Bees Algorithm
-        last_population, fitness_values = self.bees_cycle(data_dict, initial_population, fitness_values)
+        last_population, fitness_values = self.bees_cycle(initial_population, fitness_values)
 
         # Select new best solution
         fitness_new, new_solution = None, None
@@ -54,24 +60,23 @@ class Bees:
             print(f"Fitness improved: {fitness_old} < {fitness_new}, improved by {fitness_new - fitness_old}")
 
         return new_solution, last_population
-    
-    @staticmethod
-    def generate_population(data_dict: dict, population_size: int) -> list:
+
+    def generate_population(self, population_size: int) -> list:
         """
         Get random solutions based on number of bees.
         """
-        airplanes = data_dict["airplanes"]
-        passenger_groups = data_dict["passenger_groups"]
+        # airplanes = data_dict["airplanes"]
+        # passenger_groups = data_dict["passenger_groups"]
         population = []
 
         for _ in range(population_size):
             solution = {
                 airplane_id: {"groups": [], "destination": None, "free_seats": airplane.copy()}
-                for airplane_id, airplane in airplanes.items()
+                for airplane_id, airplane in self.airplanes.items()
             }
-            for group_id, group in passenger_groups.items():
+            for group_id, group in self.passenger_groups.items():
                 suitable_airplanes = [
-                    a_id for a_id in airplanes.keys()
+                    a_id for a_id in self.airplanes.keys()
                     if solution[a_id]["free_seats"][group["ticket_type"]] >= group["size"] and
                     (solution[a_id]["destination"] is None or
                      solution[a_id]["destination"] == group["destination"])
@@ -85,9 +90,8 @@ class Bees:
             population.append(solution)
 
         return population
-    
-    @staticmethod
-    def evaluate_solution(solution: dict, data_dict: dict) -> int:
+
+    def evaluate_solution(self, solution: dict) -> int:
         """
         Evaluate the fitness of a solution.
         """
@@ -95,26 +99,24 @@ class Bees:
         total_costs = 0
         for airplane, data in solution.items():
             for group_id in data["groups"]:
-                ticket_type = data_dict["passenger_groups"][group_id]["ticket_type"]
+                ticket_type = self.passenger_groups[group_id]["ticket_type"]
                 ticket_cost = TicketCost.get_ticket_cost(ticket_type)
-                size = data_dict["passenger_groups"][group_id]["size"]
+                size = self.passenger_groups[group_id]["size"]
                 total_revenue += ticket_cost * size
 
         return total_revenue - total_costs
-    
-    @staticmethod
-    def evaluate_population(population: list, data_dict: dict) -> list:
+
+    def evaluate_population(self, population: list) -> list:
         """
         Evaluate the fitness of the population.
         """
         fitness_values = []
         PASSENGER_COST = 20 #TODO calculate passenger cost, probably move to evaluate_solution
         for solution in population:
-            fitness_values.append(Bees.evaluate_solution(solution, data_dict))
+            fitness_values.append(self.evaluate_solution(solution))
         return fitness_values
-    
-    @staticmethod
-    def generate_new_solution(site: dict, data_dict: dict) -> dict:
+
+    def generate_new_solution(self, site: dict) -> dict:
         """
         Generate a new solution in the neighborhood of the site.
         """
@@ -135,7 +137,7 @@ class Bees:
         all_assigned_group_ids = {group for airplane in new_solution.values() for group in airplane["groups"]}
 
         # Get a list of all groups that are not currently assigned to any airplane
-        unassigned_groups = [group for group in data_dict["passenger_groups"] if group not in all_assigned_group_ids]
+        unassigned_groups = [group for group in self.passenger_groups if group not in all_assigned_group_ids]
 
         # If there are no unassigned groups, return the original solution
         if not unassigned_groups:
@@ -145,8 +147,9 @@ class Bees:
         new_group, n_attempts = None, 10
         for _ in range(n_attempts):
             tmp_group = random.choice(unassigned_groups)
-            if new_solution[airplane_to_change]["free_seats"][data_dict["passenger_groups"][tmp_group]["ticket_type"]] >= \
-                data_dict["passenger_groups"][tmp_group]["size"] and new_solution[airplane_to_change]["destination"] == data_dict["passenger_groups"][tmp_group]["destination"]:
+            if (new_solution[airplane_to_change]["free_seats"][self.passenger_groups[tmp_group]["ticket_type"]] >=
+                    self.passenger_groups[tmp_group]["size"] and new_solution[airplane_to_change]["destination"] ==
+                    self.passenger_groups[tmp_group]["destination"]):
                 new_group = tmp_group
                 break
 
@@ -155,24 +158,24 @@ class Bees:
             return new_solution
 
         # Change the group in the new solution
-        new_solution[airplane_to_change]["free_seats"][data_dict["passenger_groups"][group_to_change]["ticket_type"]] += data_dict["passenger_groups"][group_to_change]["size"]
-        new_solution[airplane_to_change]["free_seats"][data_dict["passenger_groups"][new_group]["ticket_type"]] -= data_dict["passenger_groups"][new_group]["size"]
+        new_solution[airplane_to_change]["free_seats"][self.passenger_groups[group_to_change]["ticket_type"]] += self.passenger_groups[group_to_change]["size"]
+        new_solution[airplane_to_change]["free_seats"][self.passenger_groups[new_group]["ticket_type"]] -= self.passenger_groups[new_group]["size"]
         new_solution[airplane_to_change]["groups"].remove(group_to_change)
         new_solution[airplane_to_change]["groups"].append(new_group)
 
         return new_solution
 
-    def perform_local_search(self, indices: list, n_recruited: int, initial_population: list, data_dict: dict):
+    def perform_local_search(self, indices: list, n_recruited: int, initial_population: list):
         """
         Perform local search around the fittest bees.
         This could be better optimized based on flower patch (Neighborhood shrinking and Site abandonment) - http://beesalgorithmsite.altervista.org/BeesAlgorithm.htm
         """
         for index in indices:
             fittest_bee = None
-            fittest_bee_fitness = self.evaluate_solution(initial_population[index], data_dict)
+            fittest_bee_fitness = self.evaluate_solution(initial_population[index])
             for _ in range(n_recruited):
-                new_solution = self.generate_new_solution(initial_population[index], data_dict)
-                new_solution_fitness = self.evaluate_solution(new_solution, data_dict)
+                new_solution = self.generate_new_solution(initial_population[index])
+                new_solution_fitness = self.evaluate_solution(new_solution)
                 if new_solution_fitness > fittest_bee_fitness:
                     fittest_bee = new_solution
                     fittest_bee_fitness = new_solution_fitness
@@ -180,7 +183,7 @@ class Bees:
             if fittest_bee:
                 initial_population[index] = fittest_bee
 
-    def bees_cycle(self, data_dict: dict, initial_population: list, initial_fitness_values: list) -> tuple:
+    def bees_cycle(self, initial_population: list, initial_fitness_values: list) -> tuple:
         """
         Perform a cycle of the Bees Algorithm.
         """
@@ -194,16 +197,16 @@ class Bees:
             remaining_best_indices = sorted_indices[self.number_of_elites:self.number_of_best_sites]
 
             # local search
-            self.perform_local_search(elite_indices, self.number_of_recruited_elites, population, data_dict)
-            self.perform_local_search(remaining_best_indices, self.number_of_recruited_best, population, data_dict)
+            self.perform_local_search(elite_indices, self.number_of_recruited_elites, population)
+            self.perform_local_search(remaining_best_indices, self.number_of_recruited_best, population)
 
             # global search
             remaining_indices = sorted_indices[self.number_of_best_sites:]
-            new_population = self.generate_population(data_dict, self.number_of_scouts - self.number_of_best_sites)
+            new_population = self.generate_population(self.number_of_scouts - self.number_of_best_sites)
             for i, index in enumerate(remaining_indices):
                 population[index] = new_population[i]
             
-            fitness_values = self.evaluate_population(population, data_dict)
+            fitness_values = self.evaluate_population(population)
 
         return population, fitness_values
 
