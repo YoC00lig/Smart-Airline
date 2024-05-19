@@ -24,71 +24,36 @@ class Bees:
         self.number_of_recruited_elites = 5
         self.number_of_recruited_best = 3
 
-    # old solution
-    @staticmethod
-    def bees_algorithm_old(population, data_dict, fitness_values) -> tuple:
+    def bees_algorithm(self, data_dict: dict) -> tuple:
         """
-        Perform a cycle of the Bees Algorithm.
+        Perform the Bees Algorithm.
         """
-        n_iterations = 100
-        n_elite_bees = 10
-        n_sites = 5
-        n_recruited_bees = 3
-        n_remaining_bees = 5
+        # Generate initial population
+        initial_population = self.generate_population(data_dict, self.number_of_scouts)
 
-        for _ in range(n_iterations):
+        # Evaluate the initial population (waggle dance)
+        fitness_values = self.evaluate_population(initial_population, data_dict)
 
-            # Select the elite bees
-            sorted_indices = sorted(range(len(fitness_values)), key=lambda i: fitness_values[i], reverse=True)
-            elite_indices = sorted_indices[:n_elite_bees]
-            elite_bees = [population[i] for i in elite_indices]
+        # Select old best solution
+        fitness_old, old_solution = None, None
+        for fitness, solution in sorted(zip(fitness_values, initial_population), key=lambda x: x[0], reverse=True)[:1]:
+            fitness_old, old_solution = fitness, solution
 
-            # Select sites for neighborhood search
-            sites = elite_bees[:n_sites]
+        # Perform a cycle of the Bees Algorithm
+        last_population, fitness_values = self.bees_cycle(data_dict, initial_population, fitness_values)
 
-            # Recruit bees around sites and evaluate their fitness TODO also for the rest of the sites/elite bees
-            # fittest_bees = {}
-            for site in sites:
-                fittest_bee = None
-                fittest_bee_fitness = None
-                site_bees = []  # List to store the bees for the site
-                for _ in range(n_recruited_bees):
-                    # Generate a new solution in the neighborhood of the site
-                    new_solution = Bees.generate_new_solution(site, data_dict)  # You need to implement this function
+        # Select new best solution
+        fitness_new, new_solution = None, None
+        for fitness, solution in sorted(zip(fitness_values, last_population), key=lambda x: x[0], reverse=True)[:1]:
+            fitness_new, new_solution = fitness, solution
 
-                    # Add the new solution to the site bees
-                    site_bees.append(new_solution)
+        # Check if fitness improved
+        if fitness_old > fitness_new:
+            assert False, f"Fitness did not improve: {fitness_old} > {fitness_new}"
+        else:
+            print(f"Fitness improved: {fitness_old} < {fitness_new}, improved by {fitness_new - fitness_old}")
 
-                    # Evaluate the fitness of the new solution
-                    new_solution_fitness = Bees.evaluate_population([new_solution])[0]
-
-                    # If the new solution is fitter than the current fittest bee for the site, update the fittest bee
-                    if fittest_bee is None or new_solution_fitness > fittest_bee_fitness:
-                        fittest_bee = new_solution
-                        fittest_bee_fitness = new_solution_fitness
-
-                # Store the fittest bee for the site
-                # fittest_bees[site['id']] = fittest_bee
-
-                # Add the fittest bee to the population
-                population.append(fittest_bee) # TODO instead of adding change the population (replace)
-
-            # Now, the population only contains the fittest bee from each site
-
-            # Select the remaining bees
-            remaining_bees = sorted_indices[n_elite_bees:]
-
-            # Generate completely new solutions for the remaining bees
-            new_population = Bees.generate_population(data_dict, n_remaining_bees)  # You need to implement this function
-            # new_population = Bees.initialise_population(data_dict, len(population) - n_elite_bees)
-            # Add the new population to the remaining bees
-            for bee in new_population:
-                population.append(bee) # TODO instead of adding change the remaining bees (replace)
-
-            # Evaluate the population
-            fitness_values = Bees.evaluate_population(population)
-
-        return population, fitness_values
+        return new_solution, last_population
     
     @staticmethod
     def generate_population(data_dict: dict, population_size: int) -> list:
@@ -197,17 +162,17 @@ class Bees:
 
         return new_solution
 
-    def perform_local_search(indices: list, n_recruited: int, initial_population: list, data_dict: dict):
+    def perform_local_search(self, indices: list, n_recruited: int, initial_population: list, data_dict: dict):
         """
         Perform local search around the fittest bees.
         This could be better optimized based on flower patch (Neighborhood shrinking and Site abandonment) - http://beesalgorithmsite.altervista.org/BeesAlgorithm.htm
         """
         for index in indices:
             fittest_bee = None
-            fittest_bee_fitness = Bees.evaluate_solution(initial_population[index], data_dict)
+            fittest_bee_fitness = self.evaluate_solution(initial_population[index], data_dict)
             for _ in range(n_recruited):
-                new_solution = Bees.generate_new_solution(initial_population[index], data_dict)
-                new_solution_fitness = Bees.evaluate_solution(new_solution, data_dict)
+                new_solution = self.generate_new_solution(initial_population[index], data_dict)
+                new_solution_fitness = self.evaluate_solution(new_solution, data_dict)
                 if new_solution_fitness > fittest_bee_fitness:
                     fittest_bee = new_solution
                     fittest_bee_fitness = new_solution_fitness
@@ -229,59 +194,32 @@ class Bees:
             remaining_best_indices = sorted_indices[self.number_of_elites:self.number_of_best_sites]
 
             # local search
-            Bees.perform_local_search(elite_indices, self.number_of_recruited_elites, population, data_dict)
-            Bees.perform_local_search(remaining_best_indices, self.number_of_recruited_best, population, data_dict)
+            self.perform_local_search(elite_indices, self.number_of_recruited_elites, population, data_dict)
+            self.perform_local_search(remaining_best_indices, self.number_of_recruited_best, population, data_dict)
 
             # global search
             remaining_indices = sorted_indices[self.number_of_best_sites:]
-            new_population = Bees.generate_population(data_dict, self.number_of_scouts - self.number_of_best_sites)
+            new_population = self.generate_population(data_dict, self.number_of_scouts - self.number_of_best_sites)
             for i, index in enumerate(remaining_indices):
                 population[index] = new_population[i]
             
-            fitness_values = Bees.evaluate_population(population, data_dict)
+            fitness_values = self.evaluate_population(population, data_dict)
 
         return population, fitness_values
-
-    def bees_algorithm(self, data_dict: dict) -> tuple:
-        """
-        Perform the Bees Algorithm.
-        """
-        # Generate initial population
-        initial_population = Bees.generate_population(data_dict, self.number_of_scouts)
-        
-        # Evaluate the initial population (waggle dance)
-        fitness_values = Bees.evaluate_population(initial_population, data_dict)
-
-        # Select old best solution
-        fitness_old, old_solution = None, None
-        for fitness, solution in sorted(zip(fitness_values, initial_population), key=lambda x: x[0], reverse=True)[:1]:
-            fitness_old, old_solution = fitness, solution
-
-        # Perform a cycle of the Bees Algorithm
-        last_population, fitness_values = self.bees_cycle(data_dict, initial_population, fitness_values)
-
-        # Select new best solution
-        fitness_new, new_solution = None, None
-        for fitness, solution in sorted(zip(fitness_values, last_population), key=lambda x: x[0], reverse=True)[:1]:
-            fitness_new, new_solution = fitness, solution
-        
-        # Check if fitness improved
-        if fitness_old > fitness_new:
-            assert False, f"Fitness did not improve: {fitness_old} > {fitness_new}"
-        else:
-            print(f"Fitness improved: {fitness_old} < {fitness_new}, improved by {fitness_new - fitness_old}")
-
-        return new_solution,last_population
 
         
 if __name__ == "__main__":
     for i in range(1):
         print(f"Test {i}")
-        data_dict = Generator.generate_random_test_data(10, 100, 10)
-        # Generator.print_data_dict(data_dict)
+        data = Generator.generate_random_test_data(
+            10,
+            100,
+            10
+        )
+        # Generator.print_test_data(data)
 
         bees = Bees(20)
 
         for _ in range(5):
-            solution, population = bees.bees_algorithm(data_dict)
+            solution, population = bees.bees_algorithm(data)
             # print(Bees.evaluate_solution(solution))
