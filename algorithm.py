@@ -42,17 +42,13 @@ class Bees:
         fitness_values = self.evaluate_population(initial_population)
 
         # Select old best solution
-        fitness_old, old_solution = None, None
-        for fitness, solution in sorted(zip(fitness_values, initial_population), key=lambda x: x[0], reverse=True)[:1]:
-            fitness_old, old_solution = fitness, solution
+        fitness_old, old_solution = Bees.get_best_solution_sorted_by_fitness_value(initial_population, fitness_values)
 
         # Perform a cycle of the Bees Algorithm
         last_population, fitness_values = self.bees_cycle(initial_population, fitness_values)
 
         # Select new best solution
-        fitness_new, new_solution = None, None
-        for fitness, solution in sorted(zip(fitness_values, last_population), key=lambda x: x[0], reverse=True)[:1]:
-            fitness_new, new_solution = fitness, solution
+        fitness_new, new_solution = Bees.get_best_solution_sorted_by_fitness_value(last_population, fitness_values)
 
         # Check if fitness improved
         self.has_fitness_improved(fitness_old, fitness_new)
@@ -118,73 +114,6 @@ class Bees:
 
         return total_revenue - total_costs
 
-    def generate_new_solution(self, site: dict) -> dict:
-        """
-        Generate a new solution in the neighborhood of the site.
-        """
-        # Create a copy of the site to avoid modifying the original solution
-        new_solution = deepcopy(site)
-
-        # Choose an airplane to change
-        airplane_to_change = random.choice(list(new_solution.keys()))
-
-        # Choose a group to change in the airplane
-        group_to_change = None
-        if new_solution[airplane_to_change]["groups"]:  # if there are groups assigned to the airplane
-            group_to_change = random.choice(new_solution[airplane_to_change]["groups"])
-        else:
-            return new_solution  # if there are no groups assigned to the airplane, return the original solution
-
-        # Get a set of all group IDs currently assigned to airplanes
-        all_assigned_group_ids = {group for airplane in new_solution.values() for group in airplane["groups"]}
-
-        # Get a list of all groups that are not currently assigned to any airplane
-        unassigned_groups = [group for group in self.passenger_groups if group not in all_assigned_group_ids]
-
-        # If there are no unassigned groups, return the original solution
-        if not unassigned_groups:
-            return new_solution
-
-        # Choose a new group for the airplane
-        new_group, n_attempts = None, 10
-        for _ in range(n_attempts):
-            tmp_group = random.choice(unassigned_groups)
-            if (new_solution[airplane_to_change]["free_seats"][self.passenger_groups[tmp_group]["ticket_type"]] >=
-                    self.passenger_groups[tmp_group]["size"] and new_solution[airplane_to_change]["destination"] ==
-                    self.passenger_groups[tmp_group]["destination"]):
-                new_group = tmp_group
-                break
-
-        # If no suitable group was found, return the original solution
-        if new_group is None:
-            return new_solution
-
-        # Change the group in the new solution
-        new_solution[airplane_to_change]["free_seats"][self.passenger_groups[group_to_change]["ticket_type"]] += self.passenger_groups[group_to_change]["size"]
-        new_solution[airplane_to_change]["free_seats"][self.passenger_groups[new_group]["ticket_type"]] -= self.passenger_groups[new_group]["size"]
-        new_solution[airplane_to_change]["groups"].remove(group_to_change)
-        new_solution[airplane_to_change]["groups"].append(new_group)
-
-        return new_solution
-
-    def perform_local_search(self, indices: list, n_recruited: int, initial_population: list):
-        """
-        Perform local search around the fittest bees.
-        This could be better optimized based on flower patch (Neighborhood shrinking and Site abandonment) - http://beesalgorithmsite.altervista.org/BeesAlgorithm.htm
-        """
-        for index in indices:
-            fittest_bee = None
-            fittest_bee_fitness = self.evaluate_solution(initial_population[index])
-            for _ in range(n_recruited):
-                new_solution = self.generate_new_solution(initial_population[index])
-                new_solution_fitness = self.evaluate_solution(new_solution)
-                if new_solution_fitness > fittest_bee_fitness:
-                    fittest_bee = new_solution
-                    fittest_bee_fitness = new_solution_fitness
-
-            if fittest_bee:
-                initial_population[index] = fittest_bee
-
     def bees_cycle(self, initial_population: list, initial_fitness_values: list) -> tuple:
         """
         Perform a cycle of the Bees Algorithm.
@@ -193,24 +122,115 @@ class Bees:
         fitness_values = deepcopy(initial_fitness_values)
 
         for _ in range(self.number_of_iterations):
-
-            sorted_indices = sorted(range(len(fitness_values)), key=lambda i: fitness_values[i], reverse=True)
-            elite_indices = sorted_indices[:self.number_of_elites]
-            remaining_best_indices = sorted_indices[self.number_of_elites:self.number_of_best_sites]
+            elite_indices, remaining_best_indices, remaining_indices = self.separate_indices(fitness_values)
 
             # local search
             self.perform_local_search(elite_indices, self.number_of_recruited_elites, population)
             self.perform_local_search(remaining_best_indices, self.number_of_recruited_best, population)
 
             # global search
-            remaining_indices = sorted_indices[self.number_of_best_sites:]
             new_population = self.generate_population(self.number_of_scouts - self.number_of_best_sites)
             for i, index in enumerate(remaining_indices):
                 population[index] = new_population[i]
-            
+
             fitness_values = self.evaluate_population(population)
 
         return population, fitness_values
+
+    def separate_indices(self, fitness_values: list) -> tuple:
+        sorted_indices = sorted(range(len(fitness_values)), key=lambda i: fitness_values[i], reverse=True)
+        elite_indices = sorted_indices[:self.number_of_elites]
+        remaining_best_indices = sorted_indices[self.number_of_elites:self.number_of_best_sites]
+        remaining_indices = sorted_indices[self.number_of_best_sites:]
+        return elite_indices, remaining_best_indices, remaining_indices
+
+    def perform_local_search(self, bees_indices: list, number_of_recruited_bees: int, population: list):
+        """
+        Perform local search around the fittest bees.
+        This could be better optimized based on flower patch (Neighborhood shrinking and Site abandonment) - http://beesalgorithmsite.altervista.org/BeesAlgorithm.htm
+        """
+        for bee_index in bees_indices:
+            fittest_bee_fitness = self.evaluate_solution(population[bee_index])
+
+            for _ in range(number_of_recruited_bees):
+                new_solution = self.generate_new_solution(population[bee_index])
+                new_solution_fitness = self.evaluate_solution(new_solution)
+                if new_solution_fitness > fittest_bee_fitness:
+                    fittest_bee_fitness = new_solution_fitness
+                    population[bee_index] = new_solution
+
+    def generate_new_solution(self, site: dict) -> dict:
+        """
+        Generate a new solution in the neighborhood of the site.
+        """
+        # Create a copy of the site to avoid modifying the original solution
+        new_solution = deepcopy(site)
+        airplane_id_to_change = Bees.choose_random_airplane_with_groups(new_solution)
+
+        # if there are no airplanes with groups
+        if not airplane_id_to_change:
+            return new_solution
+
+        airplane_groups = new_solution[airplane_id_to_change]["groups"]
+        old_group = random.choice(airplane_groups)
+
+        new_group = self.choose_new_group_for_the_airplane(new_solution, new_solution[airplane_id_to_change])
+        # If no suitable group was found, return the original solution
+        if new_group is None:
+            return new_solution
+
+        # Change the group in the new solution
+        new_solution[airplane_id_to_change]["free_seats"][self.passenger_groups[old_group]["ticket_type"]] += self.passenger_groups[old_group]["size"]
+        new_solution[airplane_id_to_change]["free_seats"][self.passenger_groups[new_group]["ticket_type"]] -= self.passenger_groups[new_group]["size"]
+        new_solution[airplane_id_to_change]["groups"].remove(old_group)
+        new_solution[airplane_id_to_change]["groups"].append(new_group)
+
+        return new_solution
+
+    @staticmethod
+    def choose_random_airplane_with_groups(solution: dict) -> str | None:
+        airplanes = list(solution.items())
+        airplanes_with_groups = list(filter(lambda airplane: len(airplane[1]["groups"]) >= 1, airplanes))
+        # if there is no airplane with groups
+        if not airplanes_with_groups:
+            return None
+
+        random_airplane = random.choice(airplanes_with_groups)
+        return random_airplane[0]
+
+    def choose_new_group_for_the_airplane(
+            self, solution: dict, airplane: dict, number_of_attempts: int = 10
+    ) -> dict | None:
+
+        unassigned_groups = self.get_unassigned_groups(solution)
+        if not unassigned_groups:
+            return None
+
+        new_group = None
+
+        for _ in range(number_of_attempts):
+            tmp_group = random.choice(unassigned_groups)
+            if (airplane["free_seats"][self.passenger_groups[tmp_group]["ticket_type"]] >=
+                    self.passenger_groups[tmp_group]["size"] and airplane["destination"] ==
+                    self.passenger_groups[tmp_group]["destination"]):
+                new_group = tmp_group
+                break
+
+        return new_group
+
+    def get_unassigned_groups(self, solution: dict) -> list:
+        all_assigned_group_ids = {group for airplane in solution.values() for group in airplane["groups"]}
+        # Get a list of all groups that are not currently assigned to any airplane
+        unassigned_groups = [group for group in self.passenger_groups if group not in all_assigned_group_ids]
+        return unassigned_groups
+
+    @staticmethod
+    def get_best_solution_sorted_by_fitness_value(population: list, fitness_values: list) -> any:
+        sorted_population = sorted(zip(fitness_values, population), key=lambda x: x[0], reverse=True)
+        if sorted_population:
+            return sorted_population[0]
+        else:
+            return None, None
 
     @staticmethod
     def has_fitness_improved(fitness_old: int, fitness_new: int) -> None:
@@ -221,17 +241,15 @@ class Bees:
 
         
 if __name__ == "__main__":
-    for i in range(1):
-        print(f"Test {i}")
-        data = Generator.generate_random_test_data(
-            10,
-            100,
-            10
-        )
-        # Generator.print_test_data(data)
+    data = Generator.generate_random_test_data(
+        10,
+        100,
+        10
+    )
+    # Generator.print_test_data(data)
 
-        bees = Bees(20)
+    bees = Bees(20)
 
-        for _ in range(5):
-            final_solution, final_population = bees.bees_algorithm(data)
-            # print(Bees.evaluate_solution(solution))
+    for _ in range(5):
+        final_solution, final_population = bees.bees_algorithm(data)
+        # print(Bees.evaluate_solution(solution))
