@@ -5,12 +5,31 @@ from copy import deepcopy
 
 # Example input:
 # Airplanes:
-# {'A1': {'seats': {<TicketType.FIRST_CLASS: 'First Class'>: 30, <TicketType.BUSINESS: 'Business Class'>: 60, <TicketType.ECONOMY: 'Economy Class'>: 180}}}
-# {'A2': {'seats': {<TicketType.FIRST_CLASS: 'First Class'>: 10, <TicketType.BUSINESS: 'Business Class'>: 90, <TicketType.ECONOMY: 'Economy Class'>: 130}}}
+# {
+# 'A1': {
+#   'seats': {
+#       <TicketType.FIRST_CLASS: 'First Class'>: 30,
+#       <TicketType.BUSINESS: 'Business Class'>: 60,
+#       <TicketType.ECONOMY: 'Economy Class'>: 180}}}
+# {'A2': {
+#   'seats': {
+#       <TicketType.FIRST_CLASS: 'First Class'>: 10,
+#       <TicketType.BUSINESS: 'Business Class'>: 90,
+#       <TicketType.ECONOMY: 'Economy Class'>: 130}}}
 
 # Passenger Groups:
-# {'G1': {size': 19, 'ticket_type': <TicketType.BUSINESS: 'Business Class'>, 'destination': 'Airport3', 'flight_date': datetime.date(2024, 4, 30)}}
-# {'G2': {'size': 12, 'ticket_type': <TicketType.BUSINESS: 'Business Class'>, 'destination': 'Airport3', 'flight_date': datetime.date(2024, 5, 3)}}
+# {
+# 'G1': {
+#   size': 19,
+#   'ticket_type': <TicketType.BUSINESS: 'Business Class'>,
+#   'destination': 'Airport3',
+#   'flight_date': datetime.date(2024, 4, 30)}}
+# {
+# 'G2': {
+#   'size': 12,
+#   'ticket_type': <TicketType.BUSINESS: 'Business Class'>,
+#   'destination': 'Airport3',
+#   'flight_date': datetime.date(2024, 5, 3)}}
 
 
 class Bees:
@@ -147,7 +166,8 @@ class Bees:
     def perform_local_search(self, bees_indices: list, number_of_recruited_bees: int, population: list):
         """
         Perform local search around the fittest bees.
-        This could be better optimized based on flower patch (Neighborhood shrinking and Site abandonment) - http://beesalgorithmsite.altervista.org/BeesAlgorithm.htm
+        This could be better optimized based on flower patch (Neighborhood shrinking and Site abandonment) -
+        http://beesalgorithmsite.altervista.org/BeesAlgorithm.htm
         """
         for bee_index in bees_indices:
             fittest_bee_fitness = self.evaluate_solution(population[bee_index])
@@ -254,7 +274,7 @@ class Bees:
 
         
 if __name__ == "__main__":
-    data = Generator.generate_random_test_data(
+    random_data = Generator.generate_random_test_data(
         10,
         100,
         10
@@ -264,5 +284,5 @@ if __name__ == "__main__":
     bees = Bees(20)
 
     for _ in range(5):
-        final_solution, final_population = bees.bees_algorithm(data)
+        final_solution, final_population = bees.bees_algorithm(random_data)
         # print(Bees.evaluate_solution(solution))
