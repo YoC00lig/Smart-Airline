@@ -179,11 +179,7 @@ class Bees:
         if new_group is None:
             return new_solution
 
-        # Change the group in the new solution
-        new_solution[airplane_id_to_change]["free_seats"][self.passenger_groups[old_group]["ticket_type"]] += self.passenger_groups[old_group]["size"]
-        new_solution[airplane_id_to_change]["free_seats"][self.passenger_groups[new_group]["ticket_type"]] -= self.passenger_groups[new_group]["size"]
-        new_solution[airplane_id_to_change]["groups"].remove(old_group)
-        new_solution[airplane_id_to_change]["groups"].append(new_group)
+        new_solution = self.update_new_solution(old_group, new_group, airplane_id_to_change, new_solution)
 
         return new_solution
 
@@ -209,11 +205,13 @@ class Bees:
         new_group = None
 
         for _ in range(number_of_attempts):
-            tmp_group = random.choice(unassigned_groups)
-            if (airplane["free_seats"][self.passenger_groups[tmp_group]["ticket_type"]] >=
-                    self.passenger_groups[tmp_group]["size"] and airplane["destination"] ==
-                    self.passenger_groups[tmp_group]["destination"]):
-                new_group = tmp_group
+            random_group_id = random.choice(unassigned_groups)
+            random_group = self.passenger_groups[random_group_id]
+            if (
+                Bees.has_enough_space(airplane, random_group) and
+                Bees.has_correct_destination(airplane, random_group)
+            ):
+                new_group = random_group
                 break
 
         return new_group
@@ -223,6 +221,21 @@ class Bees:
         # Get a list of all groups that are not currently assigned to any airplane
         unassigned_groups = [group for group in self.passenger_groups if group not in all_assigned_group_ids]
         return unassigned_groups
+
+    def update_new_solution(self, old_group, new_group, airplane_id_to_change, new_solution: dict) -> dict:
+        old_group_ticket_type = self.passenger_groups[old_group]["ticket_type"]
+        new_group_ticket_type = self.passenger_groups[new_group]["ticket_type"]
+
+        # Remove old group
+        new_solution[airplane_id_to_change]["free_seats"][old_group_ticket_type] += (
+            self.passenger_groups)[old_group]["size"]
+        new_solution[airplane_id_to_change]["groups"].remove(old_group)
+
+        # Add new group
+        new_solution[airplane_id_to_change]["free_seats"][new_group_ticket_type] -= (
+            self.passenger_groups)[new_group]["size"]
+        new_solution[airplane_id_to_change]["groups"].append(new_group)
+        return new_solution
 
     @staticmethod
     def get_best_solution_sorted_by_fitness_value(population: list, fitness_values: list) -> any:
