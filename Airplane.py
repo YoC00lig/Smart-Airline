@@ -1,4 +1,5 @@
-from Ticket import TicketType
+from TicketType import TicketType
+
 
 class Airplane:
     """A class representing an airplane.

@@ -9,19 +9,57 @@ from messages import Messages
 
 data_dict = {
     "airplanes": [
-        {"id": "A1", "capacity": 200, "ticket_type": TicketType.BUSINESS},
-        {"id": "A2", "capacity": 300, "ticket_type": TicketType.ECONOMY},
-        {"id": "A3", "capacity": 250, "ticket_type": TicketType.BUSINESS}
+        {
+            "id": "A1",
+            "capacity": 200,
+            "ticket_type": TicketType.BUSINESS
+        },
+        {
+            "id": "A2",
+            "capacity": 300,
+            "ticket_type": TicketType.ECONOMY
+        },
+        {
+            "id": "A3",
+            "capacity": 250,
+            "ticket_type": TicketType.BUSINESS
+        }
     ],
     "passenger_groups": [
-        {"id": "G1", "size": 150, "ticket_type": TicketType.BUSINESS, "destination": "Airport2", "flight_date": datetime(2024, 4, 20)},
-        {"id": "G2", "size": 250, "ticket_type": TicketType.ECONOMY, "destination": "Airport3", "flight_date": datetime(2024, 4, 22)},
-        {"id": "G3", "size": 100, "ticket_type": TicketType.BUSINESS, "destination": "Airport2", "flight_date": datetime(2024, 4, 21)},
-        {"id": "G4", "size": 180, "ticket_type": TicketType.ECONOMY, "destination": "Airport4", "flight_date": datetime(2024, 4, 23)}
+        {
+            "id": "G1", "size": 150, "ticket_type": TicketType.BUSINESS, "destination": "Airport2",
+            "flight_date": datetime(2024, 4, 20)
+        },
+        {
+            "id": "G2", "size": 250, "ticket_type": TicketType.ECONOMY, "destination": "Airport3",
+            "flight_date": datetime(2024, 4, 22)
+        },
+        {
+            "id": "G3", "size": 100, "ticket_type": TicketType.BUSINESS, "destination": "Airport2",
+            "flight_date": datetime(2024, 4, 21)
+        },
+        {
+            "id": "G4", "size": 180, "ticket_type": TicketType.ECONOMY, "destination": "Airport4",
+            "flight_date": datetime(2024, 4, 23)
+        }
     ],
     "flights": [
-        {"id": "F1", "airplane_id": "A1", "destination": "Airport2", "departure_date": datetime(2024, 4, 20), "return_date": datetime(2024, 4, 21), "cost": 1000.0},
-        {"id": "F2", "airplane_id": "A2", "destination": "Airport3", "departure_date": datetime(2024, 4, 22), "return_date": datetime(2024, 4, 23), "cost": 1500.0}
+        {
+            "id": "F1",
+            "airplane_id": "A1",
+            "destination": "Airport2",
+            "departure_date": datetime(2024, 4, 20),
+            "return_date": datetime(2024, 4, 21),
+            "cost": 1000.0
+        },
+        {
+            "id": "F2",
+            "airplane_id": "A2",
+            "destination": "Airport3",
+            "departure_date": datetime(2024, 4, 22),
+            "return_date": datetime(2024, 4, 23),
+            "cost": 1500.0
+        }
     ]
 }
 

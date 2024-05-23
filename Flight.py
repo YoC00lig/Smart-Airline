@@ -1,6 +1,7 @@
 from datetime import datetime
 from Airplane import Airplane
 
+
 class Flight:
     """A class representing a flight.
 
@@ -13,7 +14,10 @@ class Flight:
         capacity (int): The number of passengers already booked on this flight.
         cost (float): The cost of the flight.
     """
-    def __init__(self, flight_id : str, airplane : Airplane, destination : str, departure_time : datetime, return_time : datetime, cost : float):
+    def __init__(
+        self, flight_id: str, airplane: Airplane, destination: str,
+        departure_time: datetime, return_time: datetime, cost: float
+    ):
         self.flight_id = flight_id
         self.airplane = airplane
         self.destination = destination
@@ -38,4 +42,10 @@ class Flight:
             return False
 
     def __str__(self):
-        return f"Flight ID: {self.flight_id}\nAirplane ID: {self.airplane.airplane_id}\nDestination: {self.destination}\nDeparture Time: {self.departure_time}\nReturn Time: {self.return_time}\nCapacity: {self.capacity}\nCost: {self.cost}\n"
+        return (f"Flight ID: {self.flight_id}\n"
+                f"Airplane ID: {self.airplane.airplane_id}\n"
+                f"Destination: {self.destination}\n"
+                f"Departure Time: {self.departure_time}\n"
+                f"Return Time: {self.return_time}\n"
+                f"Capacity: {self.capacity}\n"
+                f"Cost: {self.cost}\n")
