@@ -36,26 +36,35 @@ class Bees:
     """
     Swarm Intelligence Algorithm - Bees Algorithm
     """
-    def __init__(self, scouts: int):
+    def __init__(
+        self, scouts: int, airplanes: dict = None, passenger_groups: dict = None, airports: dict = None
+    ):
         self.number_of_scouts = scouts
-        self.number_of_iterations = 100
+        self.number_of_iterations = None
+        self.airplanes = airplanes
+        self.passenger_groups = passenger_groups
+        self.airports = airports
         self.number_of_best_sites = 10
         self.number_of_elites = 5
         self.number_of_recruited_elites = 5
         self.number_of_recruited_best = 3
-        self.airplanes = None
-        self.passenger_groups = None
+        self.initial_population = None
+        if airplanes is not None and passenger_groups is not None:
+            self.initial_population = self.generate_population(self.number_of_scouts)
 
-    def bees_algorithm(self, data_dict: dict) -> tuple:
+    def bees_algorithm(self, data_dict: dict, number_of_iterations: int = 100) -> tuple:
         """
         Perform the Bees Algorithm.
         """
+        self.number_of_iterations = number_of_iterations
         # Save values from data dict in class object
-        self.airplanes = data_dict['airplanes']
-        self.passenger_groups = data_dict['passenger_groups']
-
-        # Generate initial population
-        initial_population = self.generate_population(self.number_of_scouts)
+        if self.initial_population is None:
+            self.airplanes = data_dict['airplanes']
+            self.passenger_groups = data_dict['passenger_groups']
+            # Generate initial population
+            initial_population = self.generate_population(self.number_of_scouts)
+        else:
+            initial_population = deepcopy(self.initial_population)
 
         # Evaluate the initial population (waggle dance)
         fitness_values = self.evaluate_population(initial_population)
@@ -70,7 +79,7 @@ class Bees:
         fitness_new, new_solution = Bees.get_best_solution_sorted_by_fitness_value(last_population, fitness_values)
 
         # Check if fitness improved
-        self.has_fitness_improved(fitness_old, fitness_new)
+        self.display_solution_stats(new_solution, fitness_old, fitness_new)
 
         return new_solution, last_population
 
@@ -121,15 +130,22 @@ class Bees:
         """
         Evaluate the fitness of a solution.
         """
-        PASSENGER_COST = 20  # TODO calculate passenger cost
+        passenger_service_cost = 20
+
         total_revenue = 0
         total_costs = 0
         for airplane, data in solution.items():
+            # add deicing and flight cost on certain airport
+            if data["destination"] is not None:
+                destination = data["destination"]
+                total_costs += self.airports[destination]
             for group_id in data["groups"]:
                 ticket_type = self.passenger_groups[group_id]["ticket_type"]
                 ticket_cost = TicketCost.get_ticket_cost(ticket_type)
                 size = self.passenger_groups[group_id]["size"]
                 total_revenue += ticket_cost * size
+                # add cost of servicing passengers based on number of passengers
+                total_costs += passenger_service_cost * size
 
         return total_revenue - total_costs
 
@@ -171,13 +187,17 @@ class Bees:
         """
         for bee_index in bees_indices:
             fittest_bee_fitness = self.evaluate_solution(population[bee_index])
+            new_fittest_bee = None
 
             for _ in range(number_of_recruited_bees):
                 new_solution = self.generate_new_solution(population[bee_index])
                 new_solution_fitness = self.evaluate_solution(new_solution)
                 if new_solution_fitness > fittest_bee_fitness:
                     fittest_bee_fitness = new_solution_fitness
-                    population[bee_index] = new_solution
+                    new_fittest_bee = new_solution
+
+            if new_fittest_bee is not None:
+                population[bee_index] = new_fittest_bee
 
     def generate_new_solution(self, site: dict) -> dict:
         """
@@ -265,24 +285,39 @@ class Bees:
         else:
             return None, None
 
-    @staticmethod
-    def has_fitness_improved(fitness_old: int, fitness_new: int) -> None:
-        if fitness_old > fitness_new:
-            print(f"Fitness did not improve: {fitness_old} > {fitness_new}")
-        else:
-            print(f"Fitness improved: {fitness_old} < {fitness_new}, improved by {fitness_new - fitness_old}")
+    def display_solution_stats(self, solution: dict, fitness_old: int, fitness_new: int) -> None:
+        destinations = [airplane["destination"] for airplane in solution.values()]
+        number_of_airplanes = sum(1 if destination else 0 for destination in destinations)
+        number_of_airports = len(set(destinations))
+        number_of_groups = sum([len(airplane["groups"]) for airplane in solution.values()])
 
-        
+        number_of_people = sum([sum([self.passenger_groups[group]["size"] for group in airplane["groups"]]) for airplane in solution.values()])
+        fitness_difference = fitness_new - fitness_old
+        fitness_difference_percent = 100 * fitness_difference / fitness_old
+
+        print(f"[number of iterations: {self.number_of_iterations}] "
+              f"[number of airplanes used: {number_of_airplanes}] "
+              f"[number of different airports used: {number_of_airports}] "
+              f"[number of groups serviced: {number_of_groups}] "
+              f"[number of people serviced: {number_of_people}] "
+              f"Fitness improved by {fitness_difference} [{format(fitness_difference_percent, ".2f")}%]")
+
+
 if __name__ == "__main__":
     random_data = Generator.generate_random_test_data(
-        10,
-        100,
-        10
+        20,
+        200,
+        20
     )
     # Generator.print_test_data(data)
 
-    bees = Bees(20)
+    bees = Bees(20, random_data["airplanes"], random_data["passenger_groups"], random_data["airports"])
 
-    for _ in range(5):
+    n_of_iterations = [100, 200, 300, 400, 500]
+
+    for n_of_iteration in n_of_iterations:
+        final_solution, final_population = bees.bees_algorithm(random_data, n_of_iteration)
+    print("======================================================================================"
+          "======================================================================================")
+    for n_of_iteration in range(10):
         final_solution, final_population = bees.bees_algorithm(random_data)
-        # print(Bees.evaluate_solution(solution))

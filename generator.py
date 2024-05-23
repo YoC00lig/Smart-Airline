@@ -70,14 +70,18 @@ class Generator:
             flight_date = (datetime.now() + timedelta(days=random.randint(1, 5))).date()
             passenger_groups[group_id] = \
                 {"size": size, "ticket_type": ticket_type, "destination": destination, "flight_date": flight_date}
-        return passenger_groups
+        return passenger_groups, airports
 
     @staticmethod
     def generate_random_test_data(number_of_airplanes: int, number_of_passenger_groups: int, number_of_airports: int):
+        airplanes = Generator.generate_airplanes(number_of_airplanes)
+        passenger_groups, airports = Generator.generate_passenger_groups(number_of_passenger_groups, number_of_airports)
+        airports = {airport: random.choice([1400, 2000]) for airport in airports}
+
         return {
-            "airplanes": Generator.generate_airplanes(number_of_airplanes),
-            "passenger_groups": Generator.generate_passenger_groups(number_of_passenger_groups, number_of_airports),
-            "flights": []# Flights will be calculated with algorithm in main.py
+            "airplanes": airplanes,
+            "passenger_groups": passenger_groups,
+            "airports": airports
         }
     
     @staticmethod
