@@ -81,7 +81,7 @@ class Bees:
         # Check if fitness improved
         self.display_solution_stats(new_solution, fitness_old, fitness_new)
 
-        return new_solution, last_population
+        return new_solution, last_population, fitness_new
 
     def generate_population(self, population_size: int) -> list:
         """
@@ -296,11 +296,12 @@ class Bees:
         fitness_difference_percent = 100 * fitness_difference / fitness_old
 
         print(f"[number of iterations: {self.number_of_iterations}] "
-              f"[number of airplanes used: {number_of_airplanes}] "
-              f"[number of different airports used: {number_of_airports}] "
-              f"[number of groups serviced: {number_of_groups}] "
-              f"[number of people serviced: {number_of_people}] "
-              f"Fitness improved by {fitness_difference} [{format(fitness_difference_percent, ".2f")}%]")
+            f"[number of airplanes used: {number_of_airplanes}] "
+            f"[number of different airports used: {number_of_airports}] "
+            f"[number of groups serviced: {number_of_groups}] "
+            f"[number of people serviced: {number_of_people}] "
+            f"Fitness improved by {fitness_difference} [{fitness_difference_percent:.2f}%]")
+
 
 
 if __name__ == "__main__":
